@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: chatapp
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/chat_app?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
