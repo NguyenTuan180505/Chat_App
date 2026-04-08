@@ -1,6 +1,7 @@
 package com.tuan.chatapp.config;
 
 import com.tuan.chatapp.Security.CustomUserDetailsService;
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,7 +25,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(CustomUserDetailsService service){
+    public UserDetailsService userDetailsService(CustomUserDetailsService service) {
         return service;
     }
 
@@ -34,32 +35,27 @@ public class SecurityConfig {
     // ========================git branch -a
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
         http
-                // ❌ Tắt CSRF (vì dùng WebSocket + API)
                 .csrf(csrf -> csrf.disable())
-
-                // ❌ Tắt form login mặc định
-                .formLogin(form -> form.disable())
-
-                // ❌ Tắt HTTP Basic
-                .httpBasic(basic -> basic.disable())
-
-                // ✅ Phân quyền
                 .authorizeHttpRequests(auth -> auth
-                        // cho phép truy cập public
-                        .requestMatchers(
-                                "/api/auth/**",     // login, register
-                                "/ws/**",           // websocket endpoint
-                                "/topic/**",        // subscribe
-                                "/app/**"
-                        ).permitAll()
+                        .requestMatchers("/auth/**", "/ws/**", "/topic/**", "/app/**",
+                                "/css/**", "/js/**", "/images/**").permitAll()
+                        .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()  // ← fix loop chính
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
                         .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
-
-                        // các request khác phải login
                         .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/auth/login")
+                        .loginProcessingUrl("/login")
+                        .defaultSuccessUrl("/chat", true)
+                        .failureUrl("/auth/login?error")
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/auth/login")
+                        .permitAll()
                 );
 
         return http.build();
