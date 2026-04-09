@@ -17,6 +17,9 @@
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
+        .form-control {
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body class="d-flex align-items-center">
@@ -33,17 +36,19 @@
                 <form id="loginForm">
                     <div class="mb-3">
                         <label class="form-label">Username</label>
-                        <input type="text" name="username" id="username" class="form-control" placeholder="Nhập username" required>
+                        <input type="text" name="username" id="username"
+                               class="form-control" placeholder="Nhập username" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <input type="password" name="password" id="password" class="form-control" placeholder="Nhập mật khẩu" required>
+                        <label class="form-label">Mật khẩu</label>
+                        <input type="password" name="password" id="password"
+                               class="form-control" placeholder="Nhập mật khẩu" required>
                     </div>
 
                     <div id="errorMsg" class="alert alert-danger d-none"></div>
 
                     <button type="submit" id="btnLogin" class="btn btn-primary w-100 py-2">
-                        <span class="spinner-border spinner-border-sm d-none" id="loading"></span>
+                        <span class="spinner-border spinner-border-sm d-none me-2" id="loading"></span>
                         Đăng nhập
                     </button>
                 </form>
@@ -65,6 +70,7 @@
         const loading = document.getElementById('loading');
         const errorMsg = document.getElementById('errorMsg');
 
+        // Reset UI
         btn.disabled = true;
         loading.classList.remove('d-none');
         errorMsg.classList.add('d-none');
@@ -72,7 +78,7 @@
         const formData = new FormData(this);
 
         try {
-            const response = await fetch('/login', {
+            const response = await fetch('/auth/login', {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -80,16 +86,25 @@
                 }
             });
 
-            const result = await response.json();
+            // Đọc JSON dù server trả về status 200 hay 400
+            let result;
+            try {
+                result = await response.json();
+            } catch (jsonErr) {
+                result = { success: false, message: "Server trả về dữ liệu không hợp lệ" };
+            }
 
-            if (result.success) {
+            if (result.success === true) {
+                // Thành công → chuyển trang
                 window.location.href = result.redirect || '/chat';
             } else {
+                // Thất bại → hiển thị lỗi
                 errorMsg.textContent = result.message || 'Đăng nhập thất bại';
                 errorMsg.classList.remove('d-none');
             }
         } catch (err) {
-            errorMsg.textContent = 'Lỗi kết nối. Vui lòng thử lại!';
+            console.error('Login error:', err);
+            errorMsg.textContent = 'Lỗi kết nối với server. Vui lòng thử lại sau!';
             errorMsg.classList.remove('d-none');
         } finally {
             btn.disabled = false;

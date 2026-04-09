@@ -6,73 +6,62 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // ========================
-    // 1. Password Encoder
-    // ========================
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public UserDetailsService userDetailsService(CustomUserDetailsService service) {
-        return service;
+    public UserDetailsService userDetailsService(CustomUserDetailsService customUserDetailsService) {
+        return customUserDetailsService;
     }
 
+    // Repository giúp lưu session sau khi login thủ công
+    @Bean
+    public SecurityContextRepository securityContextRepository() {
+        return new HttpSessionSecurityContextRepository();
+    }
 
-    // ========================
-    // 2. Security Config
-    // ========================git branch -a
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+
+                // Bắt buộc lưu SecurityContext vào session
+                .securityContext(securityContext ->
+                        securityContext.securityContextRepository(securityContextRepository())
+                )
+
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/ws/**", "/topic/**", "/app/**",
-                                "/css/**", "/js/**", "/images/**").permitAll()
-                        .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()  // ← fix loop chính
+                        .requestMatchers("/auth/**", "/login", "/register",
+                                "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+
+                        .requestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**").permitAll()
+
+                        // Trang chat chỉ cần đã login
+                        .requestMatchers("/chat").authenticated()
+
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
+
+                        .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form
-                        .loginPage("/auth/login")
-                        .loginProcessingUrl("/login")
-                        .successHandler((request, response, authentication) -> {
-                            // AJAX success → trả JSON thay vì redirect
-                            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                                response.setContentType("application/json");
-                                response.getWriter().write("{\"success\": true, \"message\": \"Login successful\", \"redirect\": \"/chat\"}");
-                            } else {
-                                response.sendRedirect("/chat");
-                            }
-                        })
-                        .failureHandler((request, response, exception) -> {
-                            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                                response.setContentType("application/json");
-                                response.setStatus(401);
-                                response.getWriter().write("{\"success\": false, \"message\": \"Invalid username or password\"}");
-                            } else {
-                                response.sendRedirect("/auth/login?error");
-                            }
-                        })
-                        .permitAll()
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/auth/login")
-                        .permitAll()
-                );
+
+                .formLogin(form -> form.disable())
+                .httpBasic(httpBasic -> httpBasic.disable());
 
         return http.build();
     }
