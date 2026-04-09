@@ -48,8 +48,24 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/auth/login")
                         .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/chat", true)
-                        .failureUrl("/auth/login?error")
+                        .successHandler((request, response, authentication) -> {
+                            // AJAX success → trả JSON thay vì redirect
+                            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+                                response.setContentType("application/json");
+                                response.getWriter().write("{\"success\": true, \"message\": \"Login successful\", \"redirect\": \"/chat\"}");
+                            } else {
+                                response.sendRedirect("/chat");
+                            }
+                        })
+                        .failureHandler((request, response, exception) -> {
+                            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+                                response.setContentType("application/json");
+                                response.setStatus(401);
+                                response.getWriter().write("{\"success\": false, \"message\": \"Invalid username or password\"}");
+                            } else {
+                                response.sendRedirect("/auth/login?error");
+                            }
+                        })
                         .permitAll()
                 )
                 .logout(logout -> logout

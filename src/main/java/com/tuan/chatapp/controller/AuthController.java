@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 public class AuthController {
 
-//    private final AuthService authService;
 
     @GetMapping("/login")
     public String loginPage() {
@@ -22,9 +21,4 @@ public class AuthController {
         return "auth/register";
     }
 
-    @PostMapping("/register")
-    public String register(@ModelAttribute User user) {
-//        authService.register(user);
-        return "redirect:/auth/login";
-    }
 }

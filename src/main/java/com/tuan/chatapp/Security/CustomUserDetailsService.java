@@ -19,9 +19,9 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final RoleRepository roleRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String phone) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        User user = userRepository.findByPhone(phone)
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         Role role = roleRepository.findById(user.getRoleId())
                 .orElseThrow(()-> new RuntimeException("Role not found"));
