@@ -42,7 +42,7 @@ public class MessageController {
                 messageService.saveMessage(messageRequest, username);
 
         messagingTemplate.convertAndSendToUser(
-                messageResponse.getSenderUsername(),
+                messageResponse.getReceiverName(),
                 "/queue/messages",
                 messageResponse
         );

@@ -3,6 +3,7 @@ package com.tuan.chatapp.Security;
 
 import com.tuan.chatapp.model.User;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,7 +14,9 @@ import java.util.List;
 @AllArgsConstructor
 public class CustomUserDetails implements UserDetails {
 
+    @Getter
     private final User user;
+
     private final String roleName;
 
 
@@ -31,6 +34,8 @@ public class CustomUserDetails implements UserDetails {
     public String getUsername() {
         return user.getUsername();
     }
+
+
 
 
     @Override
@@ -52,4 +57,5 @@ public class CustomUserDetails implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+    public String getFulName(){return  user.getFullName();};
 }

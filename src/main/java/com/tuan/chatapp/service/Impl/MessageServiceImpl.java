@@ -5,8 +5,10 @@ import com.tuan.chatapp.dto.response.MessageResponse;
 import com.tuan.chatapp.mapper.MessageMapper;
 import com.tuan.chatapp.model.Message;
 import com.tuan.chatapp.model.Room;
+import com.tuan.chatapp.model.RoomMember;
 import com.tuan.chatapp.model.User;
 import com.tuan.chatapp.repository.MessageRepository;
+import com.tuan.chatapp.repository.RoomMemberRepository;
 import com.tuan.chatapp.repository.RoomRepository;
 import com.tuan.chatapp.repository.UserRepository;
 import com.tuan.chatapp.service.IMessageService;
@@ -27,20 +29,52 @@ public class MessageServiceImpl implements IMessageService {
     private final MessageMapper messageMapper;
     private final UserRepository userRepository;
     private final RoomRepository roomRepository;
+    private final RoomMemberRepository roomMemberRepository;
 
     @Override
     @Transactional
     public MessageResponse saveMessage(MessageRequest messageRequest, String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(()-> new UsernameNotFoundException("Không thấy user"));
+
+        // 1. Lấy sender
+        User sender = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Không thấy user"));
+
+        // 2. Tạo message
         Message message = messageMapper.toEntity(messageRequest);
-        message.setSenderId(user.getId());
+        message.setSenderId(sender.getId());
         message.setCreatedAt(LocalDateTime.now());
+
+        // 3. Nếu là phòng PRIVATE → tìm receiver
+        Room room = roomRepository.findById(messageRequest.getRoomId())
+                .orElseThrow(() -> new RuntimeException("Room không tồn tại"));
+
+        User receiver = null;
+
+        if ("PRIVATE".equals(room.getType())) {
+            List<RoomMember> members = roomMemberRepository.findByRoomId(room.getId());
+
+            receiver = members.stream()
+                    .filter(m -> !m.getUserId().equals(sender.getId()))
+                    .findFirst()
+                    .map(m -> userRepository.findById(m.getUserId()).orElse(null))
+                    .orElse(null);
+        }
+
+        // 4. Save message
         Message savedMessage = messageRepository.save(message);
-        MessageResponse messageResponse = messageMapper.toResponse(savedMessage);
-        messageResponse.setSenderName(username);
-        messageResponse.setSenderUsername(user.getUsername());
-        return messageResponse;
+
+        // 5. Map response
+        MessageResponse response = messageMapper.toResponse(savedMessage);
+        response.setSenderName(sender.getFullName());
+        response.setSenderUsername(sender.getUsername());
+
+        // 🔥 THÊM RECEIVER
+        if (receiver != null) {
+            response.setReceiverUsername(receiver.getUsername());
+            response.setReceiverName(receiver.getFullName());
+        }
+
+        return response;
     }
 
     @Override
