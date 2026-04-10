@@ -203,21 +203,21 @@ export function sendMessage() {
     const payload = {
         content,
         roomId:         state.currentRoomId,
-        // FIX: send username (not a DB ID) so the backend maps it via UserDetails
-        senderUsername: state.username,
+        // // FIX: send username (not a DB ID) so the backend maps it via UserDetails
+        // senderUsername: state.username,
     };
 
     const sent = wsSend(payload);
 
     if (sent) {
         // Optimistic UI – show message immediately without waiting for server echo
-        UI.appendMessage({
-            senderUsername: state.username,
-            senderName:     state.fullName,
-            content,
-            createdAt:      new Date().toISOString(),
-            _isMe:          true,
-        }, state.username);
+        // UI.appendMessage({
+        //     senderUsername: state.username,
+        //     senderName:     state.fullName,
+        //     content,
+        //     createdAt:      new Date().toISOString(),
+        //     _isMe:          true,
+        // }, state.username);
     }
 
     UI.focusInput();

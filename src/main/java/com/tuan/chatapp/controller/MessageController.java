@@ -6,7 +6,11 @@ import com.tuan.chatapp.service.IMessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
+
+import java.security.Principal;
 
 @Controller
 @RequiredArgsConstructor
@@ -16,8 +20,12 @@ public class MessageController {
 
 
     @MessageMapping("/chat.group")
-    public void sendGroupMessage(MessageRequest messageRequest) {
-        MessageResponse messageResponse = messageService.saveMessage(messageRequest);
+    public void sendGroupMessage(MessageRequest messageRequest, Principal principal) {
+
+        String username = principal.getName();
+
+        MessageResponse messageResponse =
+                messageService.saveMessage(messageRequest, username);
 
         messagingTemplate.convertAndSend(
                 "/topic/room/" + messageResponse.getRoomId(),
@@ -26,13 +34,17 @@ public class MessageController {
     }
 
     @MessageMapping("/chat.private")
-    public void sendPrivateMessage(MessageRequest messageRequest){
-        MessageResponse messageResponse = messageService.saveMessage(messageRequest);
+    public void sendPrivateMessage(MessageRequest messageRequest, Principal principal){
+
+        String username = principal.getName();
+
+        MessageResponse messageResponse =
+                messageService.saveMessage(messageRequest, username);
 
         messagingTemplate.convertAndSendToUser(
-                messageResponse.getSenderId().toString(),
+                messageResponse.getSenderUsername(),
                 "/queue/messages",
                 messageResponse
         );
-    }
+}
 }

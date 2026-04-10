@@ -6,6 +6,6 @@ import com.tuan.chatapp.dto.response.MessageResponse;
 import java.util.List;
 
 public interface IMessageService {
-    MessageResponse saveMessage(MessageRequest messageRequest);
+    MessageResponse saveMessage(MessageRequest messageRequest, String username);
     List<MessageResponse> getMessagesByRoom(Long roomId);
 }
