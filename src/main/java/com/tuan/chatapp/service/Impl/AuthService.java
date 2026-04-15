@@ -1,5 +1,6 @@
 package com.tuan.chatapp.service.Impl;
 
+import com.tuan.chatapp.Enum.RoleName;
 import com.tuan.chatapp.dto.request.LoginRequest;
 import com.tuan.chatapp.dto.request.RegisterRequest;
 import com.tuan.chatapp.dto.response.LoginResponse;
@@ -66,13 +67,32 @@ public class AuthService implements IAuthService {
 
         authenticateUser(user);
 
+        String redirectUrl = determineRedirectUrl(user);
+
         return LoginResponse.builder()
                 .success(true)
                 .message("Đăng nhập thành công")
                 .username(user.getUsername())
                 .fullName(user.getFullName())
-                .redirect("/chat")
+                .redirect(redirectUrl)
                 .build();
+    }
+
+    /**
+     * Xác định trang redirect sau khi đăng nhập dựa vào role
+     */
+    private String determineRedirectUrl(User user) {
+        // Lấy role từ database
+        Role role = roleRepo.findById(user.getRoleId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy role"));
+
+        // Nếu là ADMIN thì redirect về trang quản trị
+        if (role.getRoleName() == RoleName.ADMIN) {   // giả sử bạn có enum RoleName
+            return "/admin/rooms";
+        }
+
+        // Các role khác (USER, STAFF,...) thì về trang chat
+        return "/chat";
     }
 
     private void authenticateUser(User user) {
@@ -84,10 +104,10 @@ public class AuthService implements IAuthService {
         saveSecurityContextToSession(SecurityContextHolder.getContext());
     }
 
-    private UserDetails buildUserDetails(User user)
-    {
+    private UserDetails buildUserDetails(User user) {
         Role role = roleRepo.findById(user.getRoleId())
-                .orElseThrow(()-> new RuntimeException("Không tìm thấy role"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy role"));
+
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())

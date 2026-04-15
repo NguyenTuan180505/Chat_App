@@ -34,7 +34,7 @@ public class ChatService implements IChatService {
             return ResponseEntity.badRequest().body(Map.of("message", "Mã phòng không được trống"));
         }
 
-        Optional<Room> optRoom = roomRepo.findByName(roomCode.trim());
+        Optional<Room> optRoom = roomRepo.findByInviteCode(roomCode);
         if (optRoom.isEmpty()) {
             return ResponseEntity.status(404).body(Map.of("message", "Không tìm thấy phòng với mã: " + roomCode));
         }

@@ -39,20 +39,29 @@ public class MessageServiceImpl implements IMessageService {
         User sender = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Không thấy user"));
 
-        // 2. Tạo message
+        // 2. Tìm room
+        Room room = roomRepository.findById(messageRequest.getRoomId())
+                .orElseThrow(() -> new RuntimeException("Room không tồn tại"));
+
+        // 3. ✅ Kiểm tra sender có trong phòng không
+        List<RoomMember> members = roomMemberRepository.findByRoomId(room.getId());
+
+        boolean isMember = members.stream()
+                .anyMatch(m -> m.getUserId().equals(sender.getId()));
+
+        if (!isMember) {
+            throw new RuntimeException("Bạn không phải thành viên của phòng này");
+        }
+
+        // 4. Tạo message
         Message message = messageMapper.toEntity(messageRequest);
         message.setSenderId(sender.getId());
         message.setCreatedAt(LocalDateTime.now());
 
-        // 3. Nếu là phòng PRIVATE → tìm receiver
-        Room room = roomRepository.findById(messageRequest.getRoomId())
-                .orElseThrow(() -> new RuntimeException("Room không tồn tại"));
-
+        // 5. Nếu là phòng PRIVATE → tìm receiver
         User receiver = null;
 
         if ("PRIVATE".equals(room.getType())) {
-            List<RoomMember> members = roomMemberRepository.findByRoomId(room.getId());
-
             receiver = members.stream()
                     .filter(m -> !m.getUserId().equals(sender.getId()))
                     .findFirst()
@@ -60,15 +69,14 @@ public class MessageServiceImpl implements IMessageService {
                     .orElse(null);
         }
 
-        // 4. Save message
+        // 6. Save message
         Message savedMessage = messageRepository.save(message);
 
-        // 5. Map response
+        // 7. Map response
         MessageResponse response = messageMapper.toResponse(savedMessage);
         response.setSenderName(sender.getFullName());
         response.setSenderUsername(sender.getUsername());
 
-        // 🔥 THÊM RECEIVER
         if (receiver != null) {
             response.setReceiverUsername(receiver.getUsername());
             response.setReceiverName(receiver.getFullName());
