@@ -3,8 +3,9 @@ package com.tuan.chatapp.api.admin;
 import com.tuan.chatapp.dto.*;
 import com.tuan.chatapp.dto.request.AddMemberRequest;
 import com.tuan.chatapp.dto.request.CreateRoomRequest;
+import com.tuan.chatapp.dto.request.UpdateRoomRequest;
 import com.tuan.chatapp.dto.response.InviteCodeResponse;
-import com.tuan.chatapp.service.RoomAdminService;
+import com.tuan.chatapp.service.IRoomAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RoomAdminApi {
 
-    private final RoomAdminService roomAdminService;
+    private final IRoomAdminService roomAdminService;
 
     @GetMapping
     public ResponseEntity<List<RoomDto>> getAllRooms(@RequestParam(required = false) String type) {
@@ -60,4 +61,11 @@ public class RoomAdminApi {
     public ResponseEntity<InviteCodeResponse> generateInviteCode(@PathVariable Long roomId) {
         return ResponseEntity.ok(roomAdminService.generateInviteCode(roomId));
     }
+
+    @PutMapping("/{roomId}")
+    public ResponseEntity<RoomDto> updateRoom(@PathVariable Long roomId,
+                                              @RequestBody UpdateRoomRequest request) {
+        return ResponseEntity.ok(roomAdminService.updateRoom(roomId, request));
+    }
+
 }

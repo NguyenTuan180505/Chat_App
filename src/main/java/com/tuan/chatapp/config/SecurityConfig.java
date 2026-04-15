@@ -52,6 +52,8 @@ public class SecurityConfig {
                         // Trang chat chỉ cần đã login
                         .requestMatchers("/chat").authenticated()
 
+                        // Admin pages + admin APIs
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
 

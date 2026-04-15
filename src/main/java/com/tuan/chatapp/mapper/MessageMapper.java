@@ -1,5 +1,6 @@
 package com.tuan.chatapp.mapper;
 
+import com.tuan.chatapp.dto.MessageDto;
 import com.tuan.chatapp.dto.request.MessageRequest;
 import com.tuan.chatapp.dto.response.MessageResponse;
 import com.tuan.chatapp.model.Message;
@@ -14,4 +15,9 @@ public interface MessageMapper {
     Message toEntity(MessageRequest messageRequest);
 
     MessageResponse toResponse(Message message);
+
+    // Map cơ bản, senderUsername & senderFullName sẽ set thủ công ở service
+    @Mapping(target = "senderUsername", ignore = true)
+    @Mapping(target = "senderFullName", ignore = true)
+    MessageDto toDto(Message message);
 }

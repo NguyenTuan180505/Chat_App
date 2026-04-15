@@ -1,8 +1,9 @@
 package com.tuan.chatapp.controller;
 
+import com.tuan.chatapp.dto.MessageDto;
 import com.tuan.chatapp.dto.RoomDto;
 import com.tuan.chatapp.dto.RoomMemberDto;
-import com.tuan.chatapp.service.RoomAdminService;
+import com.tuan.chatapp.service.IRoomAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,7 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RoomAdminViewController {
 
-    private final RoomAdminService roomAdminService;
+    private final IRoomAdminService roomAdminService;
 
     /**
      * Dashboard / Room list page.
@@ -70,6 +71,20 @@ public class RoomAdminViewController {
         model.addAttribute("filterType", "ALL");
         // Needed so layout.jsp can include the correct page.
         model.addAttribute("contentPage", "room-detail.jsp");
+
+        return "admin/layout";
+    }
+
+    @GetMapping("/rooms/{roomId}/messages/view")
+    public String roomMessageHistory(@PathVariable Long roomId, Model model) {
+        RoomDto room = roomAdminService.getRoomDetail(roomId);
+        List<MessageDto> messages = roomAdminService.getRoomMessages(roomId);   // bạn đã có API này
+
+        model.addAttribute("room", room);
+        model.addAttribute("messages", messages);
+        model.addAttribute("pageTitle", "Lịch sử tin nhắn - " + room.getName());
+        model.addAttribute("activePage", "rooms");
+        model.addAttribute("contentPage", "room-message-history.jsp");
 
         return "admin/layout";
     }

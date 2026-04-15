@@ -2,30 +2,35 @@ package com.tuan.chatapp.service.Impl;
 
 import com.tuan.chatapp.dto.*;
 import com.tuan.chatapp.dto.request.CreateRoomRequest;
+import com.tuan.chatapp.dto.request.UpdateRoomRequest;
 import com.tuan.chatapp.dto.response.InviteCodeResponse;
+import com.tuan.chatapp.mapper.MessageMapper;
 import com.tuan.chatapp.model.Room;
 import com.tuan.chatapp.model.RoomMember;
 import com.tuan.chatapp.model.User;
+import com.tuan.chatapp.model.Message;
+import com.tuan.chatapp.repository.MessageRepository;
 import com.tuan.chatapp.repository.RoomMemberRepository;
 import com.tuan.chatapp.repository.RoomRepository;
 import com.tuan.chatapp.repository.UserRepository;
-import com.tuan.chatapp.service.RoomAdminService;
+import com.tuan.chatapp.service.IRoomAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class RoomAdminServiceImpl implements RoomAdminService {
+public class RoomAdminServiceImpl implements IRoomAdminService {
 
     private final RoomRepository roomRepository;
     private final RoomMemberRepository roomMemberRepository;
     private final UserRepository userRepository;
+    private final MessageRepository messageRepository;
+    private final MessageMapper messageMapper;
 
     @Override
     public List<RoomDto> getAllRoomsByType(String type) {
@@ -124,6 +129,51 @@ public class RoomAdminServiceImpl implements RoomAdminService {
                 .roomId(roomId)
                 .inviteCode(inviteCode)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public RoomDto updateRoom(Long roomId, UpdateRoomRequest request) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Room không tồn tại"));
+
+        if (request.getName() != null && !request.getName().isBlank())
+            room.setName(request.getName());
+
+        if (request.getType() != null && !request.getType().isBlank())
+            room.setType(request.getType());
+
+        return convertToDto(roomRepository.save(room));
+    }
+
+    @Override
+    public List<MessageDto> getRoomMessages(Long roomId) {
+        roomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Room không tồn tại"));
+
+        List<Message> messages = messageRepository.findByRoomIdOrderByCreatedAtAsc(roomId);
+        if (messages.isEmpty()) return Collections.emptyList();
+
+        // Load tất cả sender 1 lần duy nhất → tránh N+1 query
+        Set<Long> senderIds = messages.stream()
+                .map(Message::getSenderId)
+                .collect(Collectors.toSet());
+
+        Map<Long, User> userMap = userRepository.findAllById(senderIds)
+                .stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
+        return messages.stream()
+                .map(message -> {
+                    MessageDto dto = messageMapper.toDto(message);
+                    User sender = userMap.get(message.getSenderId());
+                    if (sender != null) {
+                        dto.setSenderUsername(sender.getUsername());
+                        dto.setSenderFullName(sender.getFullName());
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     private RoomDto convertToDto(Room room) {
