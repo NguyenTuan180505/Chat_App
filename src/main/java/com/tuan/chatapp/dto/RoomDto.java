@@ -17,6 +17,7 @@ public class RoomDto {
     private String name;
     private String type;
     private Long createdBy;
+    private String createdName;
     private String inviteCode;
     private LocalDateTime createdAt;
 

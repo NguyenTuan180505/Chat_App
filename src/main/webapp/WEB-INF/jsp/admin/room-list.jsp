@@ -115,7 +115,7 @@
                     </td>
                     <td>
                             <span style="color:var(--text-muted); font-size:12.5px">
-                                <i class="bi bi-person me-1"></i>ID: ${room.createdBy}
+                                <i class="bi bi-person me-1"></i>${room.createdName}
                             </span>
                     </td>
                     <td>
@@ -183,10 +183,6 @@
                         <option value="GROUP">GROUP — Nhóm nhiều người</option>
                         <option value="PRIVATE">PRIVATE — Riêng tư</option>
                     </select>
-                </div>
-                <div class="mb-2">
-                    <label class="form-label">ID người tạo</label>
-                    <input type="number" class="form-control" id="input-createdBy" placeholder="Nhập User ID...">
                 </div>
             </div>
             <div class="modal-footer">
@@ -273,7 +269,6 @@
     function openCreateModal() {
         if (!createModal) createModal = new bootstrap.Modal(document.getElementById('createRoomModal'));
         document.getElementById('input-name').value = '';
-        document.getElementById('input-createdBy').value = '';
         createModal.show();
     }
 
@@ -281,15 +276,13 @@
     function submitCreateRoom() {
         const name      = document.getElementById('input-name').value.trim();
         const type      = document.getElementById('input-type').value;
-        const createdBy = parseInt(document.getElementById('input-createdBy').value);
 
         if (!name) { showToast('Vui lòng nhập tên phòng', 'error'); return; }
-        if (!createdBy) { showToast('Vui lòng nhập ID người tạo', 'error'); return; }
 
         fetch((window.__CTX || '') + '/api/admin/rooms', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, type, createdBy })
+            body: JSON.stringify({ name, type})
         })
             .then(res => {
                 if (!res.ok) throw new Error('Lỗi khi tạo phòng');

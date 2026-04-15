@@ -11,7 +11,7 @@ public interface IRoomAdminService {
 
     List<RoomDto> getAllRoomsByType(String type); // null = tất cả
 
-    RoomDto createRoom(CreateRoomRequest request);
+    RoomDto createRoom(CreateRoomRequest request, String userName);
 
     void deleteRoom(Long roomId);
 

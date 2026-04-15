@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 public class CreateRoomRequest {
     private String name;
     private String type;        // PRIVATE / GROUP
-    private Long createdBy;
+//    private Long createdBy;
 }

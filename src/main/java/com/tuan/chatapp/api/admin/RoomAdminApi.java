@@ -8,6 +8,8 @@ import com.tuan.chatapp.dto.response.InviteCodeResponse;
 import com.tuan.chatapp.service.IRoomAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,8 +32,8 @@ public class RoomAdminApi {
     }
 
     @PostMapping
-    public ResponseEntity<RoomDto> createRoom(@RequestBody CreateRoomRequest request) {
-        return ResponseEntity.ok(roomAdminService.createRoom(request));
+    public ResponseEntity<RoomDto> createRoom(@RequestBody CreateRoomRequest request, @AuthenticationPrincipal UserDetails userDetails ) {
+        return ResponseEntity.ok(roomAdminService.createRoom(request, userDetails.getUsername()));
     }
 
     @DeleteMapping("/{roomId}")

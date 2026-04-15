@@ -42,11 +42,13 @@ public class RoomAdminServiceImpl implements IRoomAdminService {
     }
 
     @Override
-    public RoomDto createRoom(CreateRoomRequest request) {
+    public RoomDto createRoom(CreateRoomRequest request, String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
         Room room = new Room();
         room.setName(request.getName());
         room.setType(request.getType().toUpperCase());
-        room.setCreatedBy(request.getCreatedBy());
+        room.setCreatedBy(user.getId());
 
         Room savedRoom = roomRepository.save(room);
         return convertToDto(savedRoom);
@@ -117,14 +119,27 @@ public class RoomAdminServiceImpl implements IRoomAdminService {
 
     @Override
     public InviteCodeResponse generateInviteCode(Long roomId) {
+        // Tìm room, throw exception rõ ràng nếu không tồn tại
         Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy room"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phòng với ID: " + roomId));
 
-        String inviteCode = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        // Chỉ cho phép tạo mã mời với phòng GROUP
+        if (!"GROUP".equals(room.getType())) {
+            throw new RuntimeException("Chỉ phòng loại GROUP mới được tạo mã mời");
+        }
 
+        // Tạo invite code ngẫu nhiên (8 ký tự uppercase)
+        String inviteCode = UUID.randomUUID()
+                .toString()
+                .replace("-", "")           // loại bỏ dấu gạch ngang
+                .substring(0, 8)
+                .toUpperCase();
+
+        // Cập nhật và lưu
         room.setInviteCode(inviteCode);
         roomRepository.save(room);
 
+        // Trả về response
         return InviteCodeResponse.builder()
                 .roomId(roomId)
                 .inviteCode(inviteCode)
@@ -139,10 +154,6 @@ public class RoomAdminServiceImpl implements IRoomAdminService {
 
         if (request.getName() != null && !request.getName().isBlank())
             room.setName(request.getName());
-
-        if (request.getType() != null && !request.getType().isBlank())
-            room.setType(request.getType());
-
         return convertToDto(roomRepository.save(room));
     }
 
@@ -177,11 +188,14 @@ public class RoomAdminServiceImpl implements IRoomAdminService {
     }
 
     private RoomDto convertToDto(Room room) {
+        User user = userRepository.findById(room.getCreatedBy())
+                    .orElseThrow(()-> new RuntimeException("Lỗi không tìm thấy người dùng"));
         return RoomDto.builder()
                 .id(room.getId())
                 .name(room.getName())
                 .type(room.getType())
                 .createdBy(room.getCreatedBy())
+                .createdName(user.getFullName())
                 .inviteCode(room.getInviteCode())
                 .createdAt(room.getCreatedAt())
                 .build();

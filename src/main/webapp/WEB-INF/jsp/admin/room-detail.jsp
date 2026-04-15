@@ -296,13 +296,6 @@
                     <input type="text" class="form-control" id="edit-room-name"
                            value="${room.name}">
                 </div>
-                <div>
-                    <label class="form-label">Loại phòng</label>
-                    <select class="form-control" id="edit-room-type">
-                        <option value="GROUP"  ${room.type == 'GROUP'  ? 'selected' : ''}>GROUP</option>
-                        <option value="PRIVATE" ${room.type == 'PRIVATE' ? 'selected' : ''}>PRIVATE</option>
-                    </select>
-                </div>
             </div>
             <div class="modal-footer">
                 <button data-bs-dismiss="modal"
@@ -455,7 +448,7 @@
 
     function submitEditRoom() {
         const name = document.getElementById('edit-room-name').value.trim();
-        const type = document.getElementById('edit-room-type').value;
+        // const type = document.getElementById('edit-room-type').value;
         if (!name) {
             showToast('Tên phòng không được trống', 'error');
             return;
@@ -464,7 +457,7 @@
         fetch((window.__CTX || '') + '/api/admin/rooms/' + ROOM_ID, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({name, type})
+            body: JSON.stringify({name})
         })
             .then(res => {
                 if (!res.ok) throw new Error('Cập nhật thất bại');
