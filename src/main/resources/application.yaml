@@ -9,7 +9,7 @@
         content-type: text/html;charset=UTF-8
 
     datasource:
-      url: jdbc:mysql://root:wzweMjlUETAHLrZMiHUWhBOofACzsBwD@mysql.railway.internal:3306/railway
+      url: jdbc:mysql://shinkansen.proxy.rlwy.net:23484/railway?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
       username: root
       password: wzweMjlUETAHLrZMiHUWhBOofACzsBwD
       driver-class-name: com.mysql.cj.jdbc.Driver
