@@ -38,26 +38,24 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
 
-                // Bắt buộc lưu SecurityContext vào session
                 .securityContext(securityContext ->
                         securityContext.securityContextRepository(securityContextRepository())
                 )
 
                 .authorizeHttpRequests(auth -> auth
+                        // ✅ Phải đặt LÊN ĐẦU
+                        .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+
                         .requestMatchers("/auth/**", "/login", "/register",
                                 "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
 
                         .requestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**").permitAll()
 
-                        // Trang chat chỉ cần đã login
                         .requestMatchers("/chat").authenticated()
 
-                        // Admin pages + admin APIs
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
-
-                        .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
 
                         .anyRequest().authenticated()
                 )
